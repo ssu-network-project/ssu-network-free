@@ -15,11 +15,14 @@ public class PostChildReq {
     private String password;
     private String parentEmail;
     private Long score;
+
+    private Long usedTime;
     @Builder
-    public PostChildReq(String email, String password, Long score){
+    public PostChildReq(String email, String password, Long score, Long usedTime){
         this.email = email;
         this.password = password;
         this.score = score;
+        this.usedTime = usedTime;
     }
 
     public Child toEntity(){
@@ -27,6 +30,7 @@ public class PostChildReq {
                 .email(email)
                 .password(password)
                 .score(score)
+                .usedTime(usedTime)
                 .build();
     }
 }
