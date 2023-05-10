@@ -6,6 +6,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -33,10 +34,11 @@ public class Child {
     private Long usedTime;
 
     @Builder
-    public Child(Long id, String email, String password, Long score) {
+    public Child(Long id, String email, String password, Long score, Long usedTime) {
         this.id = id;
         this.email = email;
         this.password = password;
         this.score = score;
+        this.usedTime=usedTime;
     }
 }
