@@ -22,7 +22,7 @@ public class childController {
 
     @GetMapping("/capture-packet/{userId}")
     public void capturePacket(@PathVariable(name = "userId") Long userIdx) throws IOException {
-        childService.startJPacketPacture(userIdx);
+        childService.startCapturePacket(userIdx);
     }
 
 }
