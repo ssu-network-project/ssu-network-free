@@ -6,6 +6,8 @@ import com.example.domain.child.service.ChildService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/child")
@@ -16,6 +18,11 @@ public class childController {
     public String signUp(@RequestBody PostChildReq postUserReq) {
         childService.createUser(postUserReq);
         return "Login Success";
+    }
+
+    @GetMapping("/capture-packet/{userId}")
+    public void capturePacket(@PathVariable(name = "userId") Long userIdx) throws IOException {
+        childService.startJPacketPacture(userIdx);
     }
 
 }
