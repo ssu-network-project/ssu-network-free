@@ -29,6 +29,9 @@ public class Child {
     @Column
     private Long score;
 
+    @Column
+    private Long usedTime;
+
     @Builder
     public Child(Long id, String email, String password, Long score) {
         this.id = id;
