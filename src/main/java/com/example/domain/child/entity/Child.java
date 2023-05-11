@@ -30,15 +30,14 @@ public class Child {
     @Column
     private Long score;
 
-    @Column
-    private Long usedTime;
+//    @Column
+//    private Long usedTime;
 
     @Builder
-    public Child(Long id, String email, String password, Long score, Long usedTime) {
+    public Child(Long id, String email, String password, Long score) {
         this.id = id;
         this.email = email;
         this.password = password;
         this.score = score;
-        this.usedTime=usedTime;
     }
 }
