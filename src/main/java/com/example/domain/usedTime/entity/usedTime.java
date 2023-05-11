@@ -10,10 +10,13 @@ import lombok.NoArgsConstructor;
 @Entity
 @NoArgsConstructor
 @Getter
-public class usedTime {
+public class UsedTime {
 
     @Id
     private Long id;
+
+    @Column
+    private Long usedTime;
 
     @Column
     private String domainName;
@@ -24,13 +27,14 @@ public class usedTime {
     @Column
     private Long weight;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "child_id")
     private Child child;
 
     @Builder
-    public usedTime(Long id, String domainName, String ipAddress, Long weight, Child child){
+    public UsedTime(Long id, Long usedTime, String domainName, String ipAddress, Long weight, Child child){
         this.id = id;
+        this.usedTime = usedTime;
         this.domainName = domainName;
         this.ipAddress = ipAddress;
         this.weight = weight;
