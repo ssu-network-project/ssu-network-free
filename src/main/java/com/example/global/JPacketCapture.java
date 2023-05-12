@@ -2,6 +2,8 @@ package com.example.global;
 
 import com.example.domain.child.entity.Child;
 import com.example.domain.child.repository.ChildRepository;
+import com.example.domain.usedTime.entity.UsedTime;
+import com.example.domain.usedTime.repository.UsedTimeRepository;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,8 @@ public class JPacketCapture {
 
     private Pcap pcap;
     private final ChildRepository childRepository;
+
+    private final UsedTimeRepository usedTimeRepository;
 
 
 //    public JPacketCapture() throws IOException {
@@ -105,6 +109,7 @@ public class JPacketCapture {
 
     public void captureNaverPacket(Pcap pcap, Long userIdx) {
 
+       Long naverWeight = 1L;
 
         //네이버 도메인 관련 필터 생성
         String filter = "tcp port 443";
@@ -158,7 +163,7 @@ public class JPacketCapture {
             @Override
             public void nextPacket(JPacket packet, String user) {
                 if (packet.hasHeader(tcp) && packet.hasHeader(ip)) {
-
+                    System.out.println("user = " + user);
                     System.out.printf("캡처 시작: %s\n 패킷의 길이: %-4d\n", new Date(packet.getCaptureHeader().timestampInMillis()),
                             packet.getCaptureHeader().caplen());
 
@@ -170,6 +175,16 @@ public class JPacketCapture {
                     //네이버로 오고가는 패킷 캡쳐 및 추출
                     if (srcIp.startsWith(finalExtractedAddr) || dstIp.startsWith(finalExtractedAddr)) {
 
+//                        try {
+//                            InetAddress address = InetAddress.getByName("www.naver.com");
+//                            //네이버의 IP 주소 223.130.195.95
+//                             addrNaver = address.getHostAddress();
+//
+//                            System.out.println("네이버의 IP 주소: " + addrNaver);
+//                        } catch (Exception e) {
+//                            System.out.println("IP 주소를 얻는 중 오류가 발생하였습니다.");
+//                            e.printStackTrace();
+//                        }
                         long usedTime; //사용시간 (단위는 우선 밀리세컨드, 추후 수정 가능)
 
                         //첫번째 패킷의 캡쳐 시간은 계속 저장해놓기 위해 변수에 저장
@@ -185,15 +200,59 @@ public class JPacketCapture {
                             long currentCapturedPacket = packet.getCaptureHeader().timestampInMillis();
                             System.out.println("currentCapturedPacket = " + currentCapturedPacket);
                             usedTime = currentCapturedPacket -firstPacketCapturedTime;
+
                             Child child = childRepository.findById(userIdx).get();
-                            Child newChild = Child.builder()
-                                    .id(child.getId())
-                                    .usedTime(usedTime)
-                                    .score(child.getScore())
-                                    .password(child.getPassword())
-                                    .email(child.getEmail())
-                                    .build();
-                            childRepository.save(newChild);
+//                            Child newChild = Child.builder()
+//                                    .id(child.getId())
+//                                    .usedTime(usedTime)
+//                                    .score(child.getScore())
+//                                    .password(child.getPassword())
+//                                    .email(child.getEmail())
+//                                    .build();
+                            //새로 업데이트 된 usedTimeEntity
+                            UsedTime usedTimeEntity = UsedTime.builder()
+                                            .id(userIdx)
+                                                .usedTime(usedTime)
+                                                    .weight(naverWeight)
+                                                            .domainName("www.naver.com")
+                                                                    .ipAddress("223.130")
+                                                                            .child(child)
+                                                                                    .build();
+//                            if (!userRepository.findByNickname(postUserReq.getNickname()).isEmpty()) {
+//                                throw new UserException(EXIST_NICKNAME);
+//                            }
+                            if(usedTimeRepository.findByChild(child).isEmpty()){
+                                //Child 없으면 무조건 새로 저장
+                                usedTimeRepository.save(usedTimeEntity);
+                            }
+                            else{
+                                //Child로 조회했을 때,
+                                //1. 도메인 네임 다르면 => 무조건 저장
+                                //2. 도메인 네임 같은 게 존재하면 => 업데이트
+                                int domainCount=0;
+                                List<UsedTime> usedTimeWithDomains = usedTimeRepository.findByChild(child);
+                                for (UsedTime usedTimeWithDomain : usedTimeWithDomains) {
+                                    if(usedTimeWithDomain.getDomainName()=="www.naver.com"){
+                                        domainCount ++;
+                                        //2번 update
+                                        Long id = usedTimeWithDomain.getId();
+                                        UsedTime usedTimeByNaver = usedTimeRepository.findById(id).get();
+//                                        UsedTime updatedUsedTime = UsedTime.builder()
+//                                                .id(id)
+//                                                .weight(usedTimeByNaver.getWeight())
+//                                                .child(usedTimeByNaver.getChild())
+//                                                .ipAddress(usedTimeByNaver.getIpAddress())
+//                                                .usedTime(usedTime)
+//                                                .build();
+                                        usedTimeRepository.save(usedTimeEntity);
+                                    }
+                                }
+                                if(domainCount==0){
+                                    //1번 insert
+                                    usedTimeRepository.save(usedTimeEntity);
+                                }
+                            }
+                            //childRepository.save(newChild);
                             System.out.println("usedTime = " + usedTime);
                             //naverPacketNum++;
                         }
