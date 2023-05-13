@@ -13,6 +13,7 @@ import lombok.NoArgsConstructor;
 public class UsedTime {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column
@@ -24,20 +25,16 @@ public class UsedTime {
     @Column
     private String ipAddress;
 
-    @Column
-    private Long weight;
-
     @ManyToOne
     @JoinColumn(name = "child_id")
     private Child child;
 
     @Builder
-    public UsedTime(Long id, Long usedTime, String domainName, String ipAddress, Long weight, Child child){
+    public UsedTime(Long id, Long usedTime, String domainName, String ipAddress, Child child){
         this.id = id;
         this.usedTime = usedTime;
         this.domainName = domainName;
         this.ipAddress = ipAddress;
-        this.weight = weight;
         this.child = child;
     }
 }
