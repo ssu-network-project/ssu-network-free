@@ -21,8 +21,4 @@ public class ChildService {
         childRepository.save(child);
         return "success";
     }
-
-    public void startCapturePacket(Long userIdx) throws IOException {
-        jPacketCapture.startCaptureByInterface(userIdx);
-    }
 }
