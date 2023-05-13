@@ -20,9 +20,7 @@ public class childController {
         return "Login Success";
     }
 
-    @GetMapping("/capture-packet/{userId}")
-    public void capturePacket(@PathVariable(name = "userId") Long userIdx) throws IOException {
-        childService.startCapturePacket(userIdx);
-    }
+
+
 
 }
