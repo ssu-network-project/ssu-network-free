@@ -1,11 +1,8 @@
 package com.example.global;
 
-import com.example.domain.child.entity.Child;
 import com.example.domain.child.repository.ChildRepository;
-import com.example.domain.usedTime.entity.UsedTime;
-import com.example.domain.usedTime.repository.UsedTimeRepository;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
+import com.example.domain.timeGoal.repository.TimeGoalRepository;
+import com.example.domain.usedTime.service.UsedTimeService;
 import lombok.RequiredArgsConstructor;
 import org.jnetpcap.Pcap;
 import org.jnetpcap.PcapBpfProgram;
@@ -14,7 +11,6 @@ import org.jnetpcap.packet.JPacket;
 import org.jnetpcap.packet.JPacketHandler;
 import org.jnetpcap.protocol.network.Ip4;
 import org.jnetpcap.protocol.tcpip.Tcp;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -32,7 +28,8 @@ public class JPacketCapture {
     private Pcap pcap;
     private final ChildRepository childRepository;
 
-    private final UsedTimeRepository usedTimeRepository;
+    private final TimeGoalRepository usedTimeRepository;
+    private final UsedTimeService usedTimeService;
 
 
 //    public JPacketCapture() throws IOException {
@@ -200,58 +197,58 @@ public class JPacketCapture {
                             long currentCapturedPacket = packet.getCaptureHeader().timestampInMillis();
                             System.out.println("currentCapturedPacket = " + currentCapturedPacket);
                             usedTime = currentCapturedPacket -firstPacketCapturedTime;
-
-                            Child child = childRepository.findById(userIdx).get();
-//                            Child newChild = Child.builder()
-//                                    .id(child.getId())
-//                                    .usedTime(usedTime)
-//                                    .score(child.getScore())
-//                                    .password(child.getPassword())
-//                                    .email(child.getEmail())
-//                                    .build();
-                            //새로 업데이트 된 usedTimeEntity
-                            UsedTime usedTimeEntity = UsedTime.builder()
-                                            .id(userIdx)
-                                                .usedTime(usedTime)
-                                                    .weight(naverWeight)
-                                                            .domainName("www.naver.com")
-                                                                    .ipAddress("223.130")
-                                                                            .child(child)
-                                                                                    .build();
-//                            if (!userRepository.findByNickname(postUserReq.getNickname()).isEmpty()) {
-//                                throw new UserException(EXIST_NICKNAME);
-//                            }
-                            if(usedTimeRepository.findByChild(child).isEmpty()){
-                                //Child 없으면 무조건 새로 저장
-                                usedTimeRepository.save(usedTimeEntity);
-                            }
-                            else{
-                                //Child로 조회했을 때,
-                                //1. 도메인 네임 다르면 => 무조건 저장
-                                //2. 도메인 네임 같은 게 존재하면 => 업데이트
-                                int domainCount=0;
-                                List<UsedTime> usedTimeWithDomains = usedTimeRepository.findByChild(child);
-                                for (UsedTime usedTimeWithDomain : usedTimeWithDomains) {
-                                    if(usedTimeWithDomain.getDomainName()=="www.naver.com"){
-                                        domainCount ++;
-                                        //2번 update
-                                        Long id = usedTimeWithDomain.getId();
-                                        UsedTime usedTimeByNaver = usedTimeRepository.findById(id).get();
-//                                        UsedTime updatedUsedTime = UsedTime.builder()
-//                                                .id(id)
-//                                                .weight(usedTimeByNaver.getWeight())
-//                                                .child(usedTimeByNaver.getChild())
-//                                                .ipAddress(usedTimeByNaver.getIpAddress())
+                            usedTimeService.insertNaverUsedTime(userIdx, usedTime);
+//                            Child child = childRepository.findById(userIdx).get();
+////                            Child newChild = Child.builder()
+////                                    .id(child.getId())
+////                                    .usedTime(usedTime)
+////                                    .score(child.getScore())
+////                                    .password(child.getPassword())
+////                                    .email(child.getEmail())
+////                                    .build();
+//                            //새로 업데이트 된 usedTimeEntity
+//                            UsedTime usedTimeEntity = UsedTime.builder()
+//                                            .id(userIdx)
 //                                                .usedTime(usedTime)
-//                                                .build();
-                                        usedTimeRepository.save(usedTimeEntity);
-                                    }
-                                }
-                                if(domainCount==0){
-                                    //1번 insert
-                                    usedTimeRepository.save(usedTimeEntity);
-                                }
-                            }
+//                                                    .weight(naverWeight)
+//                                                            .domainName("www.naver.com")
+//                                                                    .ipAddress("223.130")
+//                                                                            .child(child)
+//                                                                                    .build();
+////                            if (!userRepository.findByNickname(postUserReq.getNickname()).isEmpty()) {
+////                                throw new UserException(EXIST_NICKNAME);
+////                            }
+//                            if(usedTimeRepository.findByChild(child).isEmpty()){
+//                                //Child 없으면 무조건 새로 저장
+//                                usedTimeRepository.save(usedTimeEntity);
+//                            }
+//                            else{
+//                                //Child로 조회했을 때,
+//                                //1. 도메인 네임 다르면 => 무조건 저장
+//                                //2. 도메인 네임 같은 게 존재하면 => 업데이트
+//                                int domainCount=0;
+//                                List<UsedTime> usedTimeWithDomains = usedTimeRepository.findByChild(child);
+//                                for (UsedTime usedTimeWithDomain : usedTimeWithDomains) {
+//                                    if(usedTimeWithDomain.getDomainName()=="www.naver.com"){
+//                                        domainCount ++;
+//                                        //2번 update
+//                                        Long id = usedTimeWithDomain.getId();
+//                                        UsedTime usedTimeByNaver = usedTimeRepository.findById(id).get();
+////                                        UsedTime updatedUsedTime = UsedTime.builder()
+////                                                .id(id)
+////                                                .weight(usedTimeByNaver.getWeight())
+////                                                .child(usedTimeByNaver.getChild())
+////                                                .ipAddress(usedTimeByNaver.getIpAddress())
+////                                                .usedTime(usedTime)
+////                                                .build();
+//                                        usedTimeRepository.save(usedTimeEntity);
+//                                    }
+//                                }
+//                                if(domainCount==0){
+//                                    //1번 insert
+//                                    usedTimeRepository.save(usedTimeEntity);
+//                                }
+//                            }
                             //childRepository.save(newChild);
                             System.out.println("usedTime = " + usedTime);
                             //naverPacketNum++;
