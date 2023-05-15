@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequiredArgsConstructor
@@ -16,7 +17,7 @@ public class UsedTimeController {
     private final UsedTimeService usedTimeService;
     private final JPacketCapture jPacketCapture;
     @GetMapping("/capture/{userId}")
-    public void capturePacket(@PathVariable(name = "userId") Long userIdx) throws IOException {
+    public void capturePacket(@PathVariable(name = "userId") Long userIdx) throws IOException, ExecutionException, InterruptedException {
         jPacketCapture.startCaptureByInterface(userIdx);
     }
 
