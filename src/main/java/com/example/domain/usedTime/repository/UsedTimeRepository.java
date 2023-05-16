@@ -8,4 +8,6 @@ import java.util.List;
 
 public interface UsedTimeRepository extends JpaRepository<UsedTime,Long> {
     List<UsedTime> findByChild(Child child);
+
+    Long findByIpAddress(String ipAddress);
 }

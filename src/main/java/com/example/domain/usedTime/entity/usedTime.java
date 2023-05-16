@@ -20,21 +20,30 @@ public class UsedTime {
     private Long usedTime;
 
     @Column
+    private Long firstCapturedTime;
+
+    @Column
     private String domainName;
 
     @Column
     private String ipAddress;
+
+    @Column
+    private int capturedNum;
+
 
     @ManyToOne
     @JoinColumn(name = "child_id")
     private Child child;
 
     @Builder
-    public UsedTime(Long id, Long usedTime, String domainName, String ipAddress, Child child){
+    public UsedTime(Long id, Long usedTime, Long firstCapturedTime, String domainName, String ipAddress, Child child, int capturedNum){
         this.id = id;
         this.usedTime = usedTime;
+        this.firstCapturedTime = firstCapturedTime;
         this.domainName = domainName;
         this.ipAddress = ipAddress;
+        this.capturedNum = capturedNum;
         this.child = child;
     }
 }
