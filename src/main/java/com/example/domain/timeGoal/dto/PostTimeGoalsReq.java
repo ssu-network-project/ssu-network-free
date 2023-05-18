@@ -7,19 +7,19 @@ import lombok.NoArgsConstructor;
 
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PostTimeGoals {
+public class PostTimeGoalsReq {
     private String domainName;
     private Long time;
 
 
     @Builder
-    public PostTimeGoals(String domainName, Long time){
+    public PostTimeGoalsReq(String domainName, Long time){
         this.domainName = domainName;
         this.time = time;
     }
 
-    public PostTimeGoals toEntity(){
-        return PostTimeGoals.builder()
+    public PostTimeGoalsReq toEntity(){
+        return PostTimeGoalsReq.builder()
                 .domainName(domainName)
                 .time(time)
                 .build();
