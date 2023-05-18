@@ -4,25 +4,29 @@ import com.example.domain.timeGoal.entity.TimeGoal;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Builder(access = AccessLevel.PRIVATE)
 @Getter
-@NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class PostTimeGoalRes{
+public class PostTimeGoalRes {
+    private Long id;
+
     private String domainName;
+
     private Long time;
 
+    private String successMessage;
 
-    @Builder
-    public PostTimeGoalRes(String domainName, Long time){
-        this.domainName = domainName;
-        this.time = time;
-    }
-
-    public PostTimeGoalReq of(TimeGoal timeGoal){
-        return PostTimeGoalReq.builder()
-                .domainName(domainName)
-                .time(time)
+    public static PostTimeGoalRes of(TimeGoal timeGoal){
+        return PostTimeGoalRes.builder()
+                .id(timeGoal.getId())
+                .time(timeGoal.getTime())
+                .domainName(timeGoal.getDomainName())
+                .successMessage("목표저장에 성공했습니다")
                 .build();
     }
 }
