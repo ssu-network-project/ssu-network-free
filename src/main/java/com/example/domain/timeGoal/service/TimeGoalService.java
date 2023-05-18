@@ -17,6 +17,8 @@ public class TimeGoalService {
     private final ChildRepository childRepository;
     private final TimeGoalRepository timeGoalRepository;
 
+
+
     public PostTimeGoalsRes createGoalsByDomainName(PostTimeGoalsReq postTimeGoals, Long userIdx) {
         System.out.println("postTimeGoals = " + postTimeGoals.getDomainName());
         System.out.println("postTimeGoals = " + postTimeGoals.getTime());
