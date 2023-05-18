@@ -1,6 +1,7 @@
 package com.example.domain.child.api;
 
 import com.example.domain.child.dto.PostChildReq;
+import com.example.domain.child.dto.PostChildRes;
 import com.example.domain.child.repository.ChildRepository;
 import com.example.domain.child.service.ChildService;
 import lombok.RequiredArgsConstructor;
@@ -15,12 +16,7 @@ public class childController {
     private final ChildService childService;
     private final ChildRepository childRepository;
     @PostMapping("/sign-up")
-    public String signUp(@RequestBody PostChildReq postUserReq) {
-        childService.createUser(postUserReq);
-        return "Login Success";
+    public PostChildRes signUp(@RequestBody PostChildReq postUserReq) {
+        return childService.createUser(postUserReq);
     }
-
-
-
-
 }
