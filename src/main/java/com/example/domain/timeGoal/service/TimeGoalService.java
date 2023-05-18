@@ -2,7 +2,7 @@ package com.example.domain.timeGoal.service;
 
 import com.example.domain.child.entity.Child;
 import com.example.domain.child.repository.ChildRepository;
-import com.example.domain.timeGoal.dto.PostTimeGoals;
+import com.example.domain.timeGoal.dto.PostTimeGoalReq;
 import com.example.domain.timeGoal.entity.TimeGoal;
 import com.example.domain.timeGoal.repository.TimeGoalRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,7 @@ public class TimeGoalService {
     private final ChildRepository childRepository;
     private final TimeGoalRepository timeGoalRepository;
 
-    public String createGoalsByDomainName(PostTimeGoals postTimeGoals, Long userIdx) {
+    public String createGoalsByDomainName(PostTimeGoalReq postTimeGoals, Long userIdx) {
         System.out.println("postTimeGoals = " + postTimeGoals.getDomainName());
         System.out.println("postTimeGoals = " + postTimeGoals.getTime());
         Child child = childRepository.findById(userIdx).get();
