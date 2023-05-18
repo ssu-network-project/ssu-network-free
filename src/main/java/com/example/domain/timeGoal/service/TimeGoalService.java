@@ -2,12 +2,16 @@ package com.example.domain.timeGoal.service;
 
 import com.example.domain.child.entity.Child;
 import com.example.domain.child.repository.ChildRepository;
+import com.example.domain.timeGoal.dto.GetTimeGoalRes;
 import com.example.domain.timeGoal.dto.PostTimeGoalReq;
 import com.example.domain.timeGoal.dto.PostTimeGoalRes;
 import com.example.domain.timeGoal.entity.TimeGoal;
 import com.example.domain.timeGoal.repository.TimeGoalRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Service
@@ -31,4 +35,15 @@ public class TimeGoalService {
         TimeGoal savedGoal = timeGoalRepository.save(timeGoalsByUserIdx);
         return PostTimeGoalRes.of(savedGoal);
     };
+
+    public List<GetTimeGoalRes> getAllGoalsByUser(Long userIdx){
+        Child child = childRepository.findById(userIdx).get();
+        List<TimeGoal> timeGoals = timeGoalRepository.findByChild(child).get();
+        List<GetTimeGoalRes> getTimeGoalResList = new ArrayList<>();
+        for (TimeGoal timeGoal : timeGoals) {
+            GetTimeGoalRes getTimeGoalRes = GetTimeGoalRes.of(timeGoal);
+            getTimeGoalResList.add(getTimeGoalRes);
+        }
+        return getTimeGoalResList;
+    }
 }
