@@ -1,6 +1,7 @@
 package com.example.domain.timeGoal.api;
 
-import com.example.domain.timeGoal.dto.PostTimeGoals;
+import com.example.domain.timeGoal.dto.PostTimeGoalsReq;
+import com.example.domain.timeGoal.dto.PostTimeGoalsRes;
 import com.example.domain.timeGoal.service.TimeGoalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -12,10 +13,9 @@ public class TimeGoalController {
 
     private final TimeGoalService usedTimeService;
     @PostMapping("/goals/{userId}")
-    public String createGoalsByDomainName(
-            @RequestBody PostTimeGoals postTimeGoals,
+    public PostTimeGoalsRes createGoalsByDomainName(
+            @RequestBody PostTimeGoalsReq postTimeGoals,
             @PathVariable(name="userId")Long userIdx){
-        usedTimeService.createGoalsByDomainName(postTimeGoals, userIdx);
-        return "making goal success";
+        return usedTimeService.createGoalsByDomainName(postTimeGoals, userIdx);
     }
 }
