@@ -28,4 +28,9 @@ public class UsedTimeController {
         return usedTimeService.getAllUsedTime(userIdx);
     }
 
+    @GetMapping("/capture/multithread/{userId}")
+    public void capturePacketMultiThread(@PathVariable(name="userId") Long userIdx){
+        usedTimeService.capturePacketMultiThread(userIdx);
+    }
+
 }

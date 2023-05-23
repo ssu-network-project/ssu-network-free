@@ -166,11 +166,11 @@ public class UsageTracker {
         }
     }
 
-    private static class Pair<L,R>{
-        L left;
-        R right;
+    public static class Pair<L,R>{
+        public L left;
+        public R right;
 
-        Pair(L l, R r){
+        public Pair(L l, R r){
             this.left=l;
             this.right=r;
         }
