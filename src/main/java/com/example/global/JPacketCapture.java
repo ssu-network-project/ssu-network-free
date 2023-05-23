@@ -198,7 +198,7 @@ public class JPacketCapture {
                             }
 
                             //usedTime 추출
-                            List<UsedTime> childUsedTime = usedTimeRepository.findByChild(child);
+                            List<UsedTime> childUsedTime = usedTimeRepository.findByChild(child).get();
                             Optional<UsedTime> existedUsedTimeOptional = childUsedTime.stream()
                                     .filter(usedTime1 -> usedTime1.getIpAddress() == finalExtractedAddr)
                                     .findFirst();
