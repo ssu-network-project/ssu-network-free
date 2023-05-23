@@ -3,6 +3,8 @@ package com.example.domain.usedTime.service;
 
 import com.example.domain.child.entity.Child;
 import com.example.domain.child.repository.ChildRepository;
+import com.example.domain.timeGoal.entity.TimeGoal;
+import com.example.domain.timeGoal.repository.TimeGoalRepository;
 import com.example.domain.usedTime.dto.GetUsedTimeRes;
 import com.example.domain.usedTime.entity.UsedTime;
 import com.example.domain.usedTime.repository.UsedTimeRepository;
@@ -31,6 +33,8 @@ public class UsedTimeService {
 
     private final ChildRepository childRepository;
 
+    private final TimeGoalRepository timeGoalRepository;
+
     private HashMap<String, UsageTracker.Pair<Pcap,Long>> usageList = new HashMap<>();;
     // <url , <pcap,usage>> = new HashMap<>();
 
@@ -41,11 +45,11 @@ public class UsedTimeService {
     private static final long MILLIS_IN_SECOND = 1000;
     public void capturePacketMultiThread(Long userIdx){
         Child child = childRepository.findById(userIdx).get();
-        List<UsedTime> usedTimes = usedTimeRepository.findByChild(child).get();
+        List<TimeGoal> timeGoals = timeGoalRepository.findByChild(child).get();
 
         //DB에서 UsedTime 가져와서 url만 추출해서 urlList에 저장
-        for (UsedTime usedTime : usedTimes) {
-            urlList.add(usedTime.getDomainName());
+        for (TimeGoal timeGoal : timeGoals) {
+            urlList.add(timeGoal.getDomainName()); 
         }
         makeusageList();
     }
