@@ -3,6 +3,7 @@ package com.example.domain.usedTime.service;
 
 import com.example.domain.child.entity.Child;
 import com.example.domain.child.repository.ChildRepository;
+import com.example.domain.usedTime.dto.GetUsedTimeRes;
 import com.example.domain.usedTime.entity.UsedTime;
 import com.example.domain.usedTime.repository.UsedTimeRepository;
 import com.example.global.JPacketCapture;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -55,6 +57,17 @@ public class UsedTimeService {
                 .ipAddress(ipAddress)
                 .build();
         usedTimeRepository.save(firstUsedTime);
+    }
+
+    public List<GetUsedTimeRes> getAllUsedTime(Long userIdx){
+        Child child = childRepository.getById(userIdx);
+        List<UsedTime> usedTimeList = usedTimeRepository.findByChild(child).get();
+        List<GetUsedTimeRes> getUsedTimeResList = new ArrayList<>();
+        for (UsedTime usedTime : usedTimeList) {
+            GetUsedTimeRes getUsedTime = GetUsedTimeRes.of(usedTime);
+            getUsedTimeResList.add(getUsedTime);
+        }
+        return getUsedTimeResList;
     }
 
 //    public void insertNaverUsedTime(Long userIdx, Long usedTime){
