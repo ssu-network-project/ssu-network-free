@@ -22,6 +22,18 @@ public class UsageTracker {
     private static HashMap<String, Pair<Pcap,Long>> usageList;
     // <url , <pcap,usage>>
 
+
+    public static HashMap<String, Long> getUsageList() {
+
+        HashMap<String,Long> list = new HashMap<>();
+
+        for(String url : usageList.keySet()) {
+            list.put(url,usageList.get(url).right);
+        }
+
+        return list;
+    }
+
     public UsageTracker(List<String> urlList) {
 
         usageList = new HashMap<>();
@@ -137,7 +149,7 @@ public class UsageTracker {
         // 캡처 장치 닫기
     }
 
-    public void viewUsage() {
+    public static void viewUsage() {
 
         int count = 1;
 
