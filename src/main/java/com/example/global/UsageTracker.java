@@ -7,12 +7,15 @@ import org.jnetpcap.packet.PcapPacket;
 import org.jnetpcap.packet.format.FormatUtils;
 import org.jnetpcap.protocol.network.Ip4;
 import org.jnetpcap.protocol.network.Ip6;
+import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+
 
 public class UsageTracker {
     private static final String HTTPS_SYN_FIN_FILTER = "dst port 443 and (tcp-syn|tcp-fin) != 0";
