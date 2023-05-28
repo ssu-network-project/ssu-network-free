@@ -7,7 +7,9 @@ import com.example.domain.timeGoal.entity.TimeGoal;
 import com.example.domain.timeGoal.repository.TimeGoalRepository;
 import com.example.domain.usedTime.dto.GetUsedTimeRes;
 import com.example.domain.usedTime.entity.UsedTime;
+import com.example.domain.usedTime.entity.UsedTime2;
 import com.example.domain.usedTime.repository.UsedTimeRepository;
+import com.example.domain.usedTime.repository.UsedTimeRepository2;
 import com.example.global.UsageTracker;
 import lombok.RequiredArgsConstructor;
 import org.jnetpcap.Pcap;
@@ -23,6 +25,8 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static java.lang.Thread.sleep;
+
 @Service
 @RequiredArgsConstructor
 public class UsedTimeService {
@@ -33,11 +37,17 @@ public class UsedTimeService {
 
     private final TimeGoalRepository timeGoalRepository;
 
+    private final UsageTracker usageTracker;
+
+    private final UsedTimeRepository2 usedTimeRepository2;
+
     private List<String> urlList = new ArrayList<>();
 
-    public void capturePacketMultiThread(Long userIdx){
+
+    public void capturePacketMultiThread(Long userIdx) throws InterruptedException {
         Child child = childRepository.findById(userIdx).get();
         List<TimeGoal> timeGoals = timeGoalRepository.findByChild(child).get();
+
 
         //DB에서 UsedTime 가져와서 url만 추출해서 urlList에 저장
         for (TimeGoal timeGoal : timeGoals) {
@@ -48,6 +58,8 @@ public class UsedTimeService {
 
         usageTracker.trackTime();
 
+        // 10초에 한번씩 usage 출력하기
+        // 실시간으로 출력됨.
         Timer timer = new Timer();
 
         // TimerTask를 상속한 클래스를 생성합니다.
@@ -61,8 +73,9 @@ public class UsedTimeService {
 
         // 10초마다 작업(task)을 반복 실행합니다.
         timer.schedule(task, 0, 10000);
-    }
 
+    }
+    
     //도메인에 대한 패킷 저장 업데이트
     public void insertUsedTimeByDomain(Child child, UsedTime existedUsedTime, Long usedTime, String extractedIpAddress, String domainName){
         System.out.println("UsedTime updated in DB " + domainName);
