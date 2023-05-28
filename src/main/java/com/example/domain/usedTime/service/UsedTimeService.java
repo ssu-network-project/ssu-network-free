@@ -3,16 +3,29 @@ package com.example.domain.usedTime.service;
 
 import com.example.domain.child.entity.Child;
 import com.example.domain.child.repository.ChildRepository;
+import com.example.domain.timeGoal.entity.TimeGoal;
+import com.example.domain.timeGoal.repository.TimeGoalRepository;
 import com.example.domain.usedTime.dto.GetUsedTimeRes;
 import com.example.domain.usedTime.entity.UsedTime;
+import com.example.domain.usedTime.entity.UsedTime2;
 import com.example.domain.usedTime.repository.UsedTimeRepository;
-import com.example.global.JPacketCapture;
+import com.example.domain.usedTime.repository.UsedTimeRepository2;
+import com.example.global.UsageTracker;
 import lombok.RequiredArgsConstructor;
+import org.jnetpcap.Pcap;
+import org.jnetpcap.PcapBpfProgram;
+import org.jnetpcap.PcapIf;
+import org.jnetpcap.packet.PcapPacket;
+import org.jnetpcap.packet.format.FormatUtils;
+import org.jnetpcap.protocol.network.Ip4;
+import org.jnetpcap.protocol.network.Ip6;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import static java.lang.Thread.sleep;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +34,47 @@ public class UsedTimeService {
     private final UsedTimeRepository usedTimeRepository;
 
     private final ChildRepository childRepository;
+
+    private final TimeGoalRepository timeGoalRepository;
+
+    private final UsageTracker usageTracker;
+
+    private final UsedTimeRepository2 usedTimeRepository2;
+
+    private List<String> urlList = new ArrayList<>();
+
+
+    public void capturePacketMultiThread(Long userIdx) throws InterruptedException {
+        Child child = childRepository.findById(userIdx).get();
+        List<TimeGoal> timeGoals = timeGoalRepository.findByChild(child).get();
+
+
+        //DB에서 UsedTime 가져와서 url만 추출해서 urlList에 저장
+        for (TimeGoal timeGoal : timeGoals) {
+            urlList.add(timeGoal.getDomainName());
+        }
+
+        UsageTracker usageTracker = new UsageTracker(urlList);
+
+        usageTracker.trackTime();
+
+        // 10초에 한번씩 usage 출력하기
+        // 실시간으로 출력됨.
+        Timer timer = new Timer();
+
+        // TimerTask를 상속한 클래스를 생성합니다.
+        TimerTask task = new TimerTask() {
+            @Override
+            public void run() {
+
+                usageTracker.viewUsage();
+            }
+        };
+
+        // 10초마다 작업(task)을 반복 실행합니다.
+        timer.schedule(task, 0, 10000);
+
+    }
 
     //도메인에 대한 패킷 저장 업데이트
     public void insertUsedTimeByDomain(Child child, UsedTime existedUsedTime, Long usedTime, String extractedIpAddress, String domainName){
@@ -114,4 +168,17 @@ public class UsedTimeService {
 //            }
 //        }
 //    }
+private static class Pair<L,R>{
+    L left;
+    R right;
+
+    Pair(L l, R r){
+        this.left=l;
+        this.right=r;
+    }
 }
+
+}
+
+
+
