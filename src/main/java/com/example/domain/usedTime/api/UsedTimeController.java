@@ -19,7 +19,7 @@ public class UsedTimeController {
     private final UsedTimeService usedTimeService;
     private final JPacketCapture jPacketCapture;
     @GetMapping("/capture/{userId}")
-    public void capturePacket(@PathVariable(name = "userId") Long userIdx) throws IOException, ExecutionException, InterruptedException {
+    public void capturePacket(@PathVariable(name = "userId") Long userIdx) throws IOException {
         jPacketCapture.startCaptureByInterface(userIdx);
     }
 
@@ -29,7 +29,7 @@ public class UsedTimeController {
     }
 
     @GetMapping("/capture/multithread/{userId}")
-    public void capturePacketMultiThread(@PathVariable(name="userId") Long userIdx){
+    public void capturePacketMultiThread(@PathVariable(name="userId") Long userIdx) throws InterruptedException {
         usedTimeService.capturePacketMultiThread(userIdx);
     }
 
