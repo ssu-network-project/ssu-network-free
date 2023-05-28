@@ -1,7 +1,6 @@
 package com.example.domain.child.dto;
 
 import com.example.domain.child.entity.Child;
-import com.example.domain.parent.entity.Parent;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;

@@ -1,11 +1,5 @@
 package com.example.global;
 
-import com.example.domain.child.entity.Child;
-import com.example.domain.usedTime.entity.UsedTime;
-import com.example.domain.usedTime.entity.UsedTime2;
-import com.example.domain.usedTime.repository.UsedTimeRepository2;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jnetpcap.Pcap;
 import org.jnetpcap.PcapBpfProgram;
@@ -14,14 +8,11 @@ import org.jnetpcap.packet.PcapPacket;
 import org.jnetpcap.packet.format.FormatUtils;
 import org.jnetpcap.protocol.network.Ip4;
 import org.jnetpcap.protocol.network.Ip6;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -38,18 +29,16 @@ public class UsageTracker {
     // <url , <pcap,usage>>
 
 
-    public static HashMap<String, Long> getUsageList() {
+    public HashMap<String,Long> getAllUsedTime(){
 
-        HashMap<String,Long> list = new HashMap<>();
+        HashMap<String,Long> result = new HashMap<>();
 
         for(String url : usageList.keySet()) {
-            list.put(url,usageList.get(url).right);
+            result.put(url,usageList.get(url).right);
         }
 
-        return list;
+        return result;
     }
-
-
     public UsageTracker(List<String> urlList) {
 
         usageList = new HashMap<>();
@@ -62,6 +51,9 @@ public class UsageTracker {
             System.err.println("네트워크 장치를 찾을 수 없습니다: " + errbuf);
             return;
         }
+
+        // 네트워크 인터페이스 목록 출력
+        printNetIf(devices);
 
         // 캡처 장치 열기
         int snaplen = 64 * 1024; // 패킷 캡처 크기
@@ -146,9 +138,8 @@ public class UsageTracker {
                     } else if ((currentTime - startTime)/(MILLIS_IN_SECOND*SECONDS_IN_MINUTE) > 1) {
                         startTime = currentTime;
                     } else {
-                        long endTime = currentTime;
-                        time += (endTime - startTime);
-                        startTime = endTime;
+                        time += (currentTime - startTime);
+                        startTime = currentTime;
                     }
 
                     // 결과 표시 (예: 매분마다)
@@ -159,12 +150,9 @@ public class UsageTracker {
                     System.out.println("사용자의 " + url + " 사용 시간: " + minutes + "분 " + seconds + "초");
 
                     usageList.get(url).right = time;
-
-
                 }
             });
         }
-        // 캡처 장치 닫기
     }
 
     public static void viewUsage() {
@@ -182,6 +170,15 @@ public class UsageTracker {
             System.out.println(count++ + ") " + url);
             System.out.println("- usage : "+ minutes + "분 " + seconds + "초");
         }
+    }
+
+    private void printNetIf(List<PcapIf> devices) {
+
+        int interfaceNum=0;
+        for(PcapIf device : devices) {
+            System.out.printf("[%d] %s\n",interfaceNum++,device.getDescription());
+        }
+
     }
 
     public static class Pair<L,R>{

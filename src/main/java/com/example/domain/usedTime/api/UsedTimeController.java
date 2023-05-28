@@ -1,15 +1,12 @@
 package com.example.domain.usedTime.api;
 
 
-import com.example.domain.usedTime.dto.GetUsedTimeRes;
 import com.example.domain.usedTime.service.UsedTimeService;
-import com.example.global.JPacketCapture;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.*;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
@@ -17,20 +14,14 @@ import java.util.concurrent.ExecutionException;
 public class UsedTimeController {
 
     private final UsedTimeService usedTimeService;
-    private final JPacketCapture jPacketCapture;
-    @GetMapping("/capture/{userId}")
-    public void capturePacket(@PathVariable(name = "userId") Long userIdx) throws IOException {
-        jPacketCapture.startCaptureByInterface(userIdx);
-    }
-
-    @GetMapping("/all/{userId}")
-    public List<GetUsedTimeRes> getAllUsedTime(@PathVariable(name = "userId") Long userIdx){
-        return usedTimeService.getAllUsedTime(userIdx);
-    }
 
     @GetMapping("/capture/multithread/{userId}")
-    public void capturePacketMultiThread(@PathVariable(name="userId") Long userIdx) throws InterruptedException {
+    public void capturePacketMultiThread(@PathVariable(name="userId") Long userIdx) {
         usedTimeService.capturePacketMultiThread(userIdx);
     }
 
+    @GetMapping("/save/{userId}")
+    public void saveUsageToDB(@PathVariable(name="userId") Long userIdx) {
+        usedTimeService.saveUsageToDB(userIdx);
+    }
 }
