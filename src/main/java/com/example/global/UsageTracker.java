@@ -50,6 +50,7 @@ public class UsageTracker {
     }
 
 
+    /**3.도메인 별 사용 시간 캡쳐 시작 API 멀티스레드 구현 로직*/
     public UsageTracker(List<String> urlList) {
 
         usageList = new HashMap<>();
@@ -100,7 +101,6 @@ public class UsageTracker {
             usageList.put(url, new Pair<>(pcap, time));
         }
     }
-
     public void trackTime() {
 
         ExecutorService executorService = Executors.newFixedThreadPool(usageList.size());
