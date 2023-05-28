@@ -75,7 +75,7 @@ public class UsedTimeService {
         timer.schedule(task, 0, 10000);
 
     }
-    
+
     //도메인에 대한 패킷 저장 업데이트
     public void insertUsedTimeByDomain(Child child, UsedTime existedUsedTime, Long usedTime, String extractedIpAddress, String domainName){
         System.out.println("UsedTime updated in DB " + domainName);
