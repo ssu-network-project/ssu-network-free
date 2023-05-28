@@ -37,24 +37,10 @@ public class UsedTimeService {
 
     private final TimeGoalRepository timeGoalRepository;
 
-    private final UsageTracker usageTracker;
-
-    private final UsedTimeRepository2 usedTimeRepository2;
-
     private List<String> urlList = new ArrayList<>();
 
-
     public void capturePacketMultiThread(Long userIdx) throws InterruptedException {
-        Child child = childRepository.findById(userIdx).get();
-        List<TimeGoal> timeGoals = timeGoalRepository.findByChild(child).get();
-
-
-        //DB에서 UsedTime 가져와서 url만 추출해서 urlList에 저장
-        for (TimeGoal timeGoal : timeGoals) {
-            urlList.add(timeGoal.getDomainName());
-        }
-
-        UsageTracker usageTracker = new UsageTracker(urlList);
+        UsageTracker usageTracker = getUsageTracker(userIdx);
 
         usageTracker.trackTime();
 
@@ -76,6 +62,23 @@ public class UsedTimeService {
 
     }
 
+    private UsageTracker getUsageTracker(Long userIdx) {
+        Child child = childRepository.findById(userIdx).get();
+        List<TimeGoal> timeGoals = timeGoalRepository.findByChild(child).get();
+
+
+        //DB에서 UsedTime 가져와서 url만 추출해서 urlList에 저장
+        for (TimeGoal timeGoal : timeGoals) {
+            urlList.add(timeGoal.getDomainName());
+        }
+
+        UsageTracker usageTracker = new UsageTracker(urlList);
+        return usageTracker;
+    }
+
+    /**
+     *1.도메인 별 사용 시간 캡쳐 API
+     */
     //도메인에 대한 패킷 저장 업데이트
     public void insertUsedTimeByDomain(Child child, UsedTime existedUsedTime, Long usedTime, String extractedIpAddress, String domainName){
         System.out.println("UsedTime updated in DB " + domainName);
@@ -99,7 +102,10 @@ public class UsedTimeService {
     }
 
 
-    //해당 도메인에 관련딘 패킷 첫 저장
+    /**
+     *1.도메인 별 사용 시간 캡쳐 API
+     */
+    //해당 도메인의 첫 패킷 저장
     public void insertFirstCaptureTime(Child child, String ipAddress, String domainName, Long firstTimeCapturedTime) {
 
         UsedTime firstUsedTime = UsedTime.builder()
@@ -113,6 +119,10 @@ public class UsedTimeService {
         usedTimeRepository.save(firstUsedTime);
     }
 
+
+    /**
+     *2.도메인 별 사용 시간 조회 API
+     */
     public List<GetUsedTimeRes> getAllUsedTime(Long userIdx){
         Child child = childRepository.getById(userIdx);
         List<UsedTime> usedTimeList = usedTimeRepository.findByChild(child).get();
@@ -123,61 +133,6 @@ public class UsedTimeService {
         }
         return getUsedTimeResList;
     }
-
-//    public void insertNaverUsedTime(Long userIdx, Long usedTime){
-//
-//        Child child = childRepository.findById(userIdx).get();
-//
-//        UsedTime newUsedTime = UsedTime.builder()
-//                .usedTime(usedTime)
-//                .child(child)
-//                .domainName("www.naver.com")
-//                .ipAddress("223.130")
-//                .build();
-//
-//
-//        if(usedTimeRepository.findByChild(child).isEmpty()){
-//            //Child 없으면 무조건 새로 저장
-//            usedTimeRepository.save(newUsedTime);
-//        }
-//        else{
-//            //Child로 조회했을 때,
-//            //1. 도메인 네임 다르면 => 무조건 저장
-//            //2. 도메인 네임 같은 게 존재하면 => 업데이트
-//            int domainCount=0;
-//            List<UsedTime> usedTimeWithDomains = usedTimeRepository.findByChild(child);
-//            for (UsedTime usedTimeWithDomain : usedTimeWithDomains) {
-//                if(usedTimeWithDomain.getDomainName()=="www.naver.com"){
-//                    domainCount ++;
-//                    //2번 update
-//                    Long id = usedTimeWithDomain.getId();
-//                    UsedTime usedTimeByNaver = usedTimeRepository.findById(id).get();
-//                    UsedTime updatedUsedTime = UsedTime.builder()
-//                            .id(id)
-//                            .child(child)
-//                            .domainName("www.naver.com")
-//                            .ipAddress("223.130")
-//                            .usedTime(usedTime)
-//                            .build();
-//                    usedTimeRepository.save(updatedUsedTime);
-//                }
-//            }
-//            if(domainCount==0){
-//                //1번 insert
-//                usedTimeRepository.save(newUsedTime);
-//            }
-//        }
-//    }
-private static class Pair<L,R>{
-    L left;
-    R right;
-
-    Pair(L l, R r){
-        this.left=l;
-        this.right=r;
-    }
-}
-
 }
 
 

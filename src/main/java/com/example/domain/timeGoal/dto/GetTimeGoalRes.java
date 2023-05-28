@@ -10,6 +10,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**현재까지 저장된 모든 도메인 별 시간 목표 조회 Response Body**/
+/**하나의 도메인 별 시간 **/
+
+/**
+ * 목표 id
+ * 도메인
+ * 시간 (단위 : 분)
+ * 등록한 자녀 id
+ */
 @Builder(access = AccessLevel.PRIVATE)
 @Getter
 public class GetTimeGoalRes {
