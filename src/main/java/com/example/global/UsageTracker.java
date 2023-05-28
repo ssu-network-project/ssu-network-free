@@ -1,5 +1,12 @@
 package com.example.global;
 
+import com.example.domain.child.entity.Child;
+import com.example.domain.usedTime.entity.UsedTime;
+import com.example.domain.usedTime.entity.UsedTime2;
+import com.example.domain.usedTime.repository.UsedTimeRepository2;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import org.jnetpcap.Pcap;
 import org.jnetpcap.PcapBpfProgram;
 import org.jnetpcap.PcapIf;
@@ -7,20 +14,25 @@ import org.jnetpcap.packet.PcapPacket;
 import org.jnetpcap.packet.format.FormatUtils;
 import org.jnetpcap.protocol.network.Ip4;
 import org.jnetpcap.protocol.network.Ip6;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 
-
+@Component
+@RequiredArgsConstructor
 public class UsageTracker {
     private static final String HTTPS_SYN_FIN_FILTER = "dst port 443 and (tcp-syn|tcp-fin) != 0";
     private static final long SECONDS_IN_MINUTE = 60;
     private static final long MILLIS_IN_SECOND = 1000;
+
 
     private static HashMap<String, Pair<Pcap,Long>> usageList;
     // <url , <pcap,usage>>
@@ -36,6 +48,7 @@ public class UsageTracker {
 
         return list;
     }
+
 
     public UsageTracker(List<String> urlList) {
 
@@ -146,6 +159,8 @@ public class UsageTracker {
                     System.out.println("사용자의 " + url + " 사용 시간: " + minutes + "분 " + seconds + "초");
 
                     usageList.get(url).right = time;
+
+
                 }
             });
         }
