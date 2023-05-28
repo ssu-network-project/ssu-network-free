@@ -7,6 +7,18 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+
+/**도메인별 목표 시간 스키마**/
+
+/**
+ * 사용시간 id
+ * 사용시간 (단위 : 밀리세컨드)
+ * 처음 캡쳐된 시간 (단위 : 밀리세컨드)
+ * 도메인
+ * 추출된 IP 주소
+ * 캡쳐된 패킷 수
+ * 등록 자녀 id
+ */
 @Entity
 @NoArgsConstructor
 @Getter

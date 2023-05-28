@@ -5,6 +5,12 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**도메인 별 시간 목표 생성 API의 Request Body**/
+
+/**
+ * 도메인
+ * 목표 시간 (단위 : 분)
+ */
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class PostTimeGoalReq {

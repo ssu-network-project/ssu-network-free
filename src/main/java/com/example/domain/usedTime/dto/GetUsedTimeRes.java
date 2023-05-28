@@ -7,6 +7,16 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+/**도메인 별 사용 시간 조회 Response Body**/
+/**하나의 도메인 별 사용 시간 **/
+
+/**
+ * 사용시간 id
+ * 등록 자녀 id
+ * 사용 시간 (단위 : 밀리세컨드)
+ * 도메인
+ */
+
 @Getter
 @Builder(access = AccessLevel.PRIVATE)
 public class GetUsedTimeRes {
