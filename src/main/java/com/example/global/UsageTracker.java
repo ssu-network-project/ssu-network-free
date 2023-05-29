@@ -20,7 +20,8 @@ import java.util.concurrent.Executors;
 @Component
 @RequiredArgsConstructor
 public class UsageTracker {
-    private static final String HTTPS_SYN_FIN_FILTER = "dst port 443 and (tcp-syn|tcp-fin) != 0";
+    // syn, fin ack와 keep-alive 패킷 필터
+    private static final String HTTPS_SYN_FIN_FILTER = "dst port 443 and ((tcp-syn|tcp-fin) != 0 or tcp[14:2] = 1)";
     private static final long SECONDS_IN_MINUTE = 60;
     private static final long MILLIS_IN_SECOND = 1000;
 
@@ -28,7 +29,9 @@ public class UsageTracker {
     private static HashMap<String, Pair<Pcap,Long>> usageList;
     // <url , <pcap,usage>>
 
-
+    /**
+     *2.도메인 별 사용 시간 조회 API
+     */
     public HashMap<String,Long> getAllUsedTime(){
 
         HashMap<String,Long> result = new HashMap<>();
@@ -39,6 +42,8 @@ public class UsageTracker {
 
         return result;
     }
+
+    /**3.도메인 별 사용 시간 캡쳐 시작 API 멀티스레드 구현 로직*/
     public UsageTracker(List<String> urlList) {
 
         usageList = new HashMap<>();
@@ -53,7 +58,7 @@ public class UsageTracker {
         }
 
         // 네트워크 인터페이스 목록 출력
-        printNetIf(devices);
+        // printNetIf(devices);
 
         // 캡처 장치 열기
         int snaplen = 64 * 1024; // 패킷 캡처 크기

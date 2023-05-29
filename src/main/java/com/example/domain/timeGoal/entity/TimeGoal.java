@@ -8,6 +8,15 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+
+/**도메인별 목표 시간 스키마**/
+
+/**
+ * 목표 id
+ * 도메인
+ * 시간 (단위 :분)
+ * 등록한 자녀 id
+ */
 @Entity
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

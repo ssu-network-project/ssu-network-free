@@ -21,6 +21,9 @@ public class TimeGoalService {
     private final ChildRepository childRepository;
     private final TimeGoalRepository timeGoalRepository;
 
+    /**
+     *1.도메인 별 시간 목표 생성 API
+     */
     public PostTimeGoalRes createGoalsByDomainName(PostTimeGoalReq postTimeGoals, Long userIdx) {
         System.out.println("postTimeGoals = " + postTimeGoals.getDomainName());
         System.out.println("postTimeGoals = " + postTimeGoals.getTime());
@@ -34,6 +37,9 @@ public class TimeGoalService {
         return PostTimeGoalRes.of(savedGoal);
     }
 
+    /**
+     *2.현재까지 저장된 모든 도메인 별 시간 목표 조회
+     */
     public List<GetTimeGoalRes> getAllGoalsByUser(Long userIdx){
         Child child = childRepository.findById(userIdx).get();
         List<TimeGoal> timeGoals = timeGoalRepository.findByChild(child).get();

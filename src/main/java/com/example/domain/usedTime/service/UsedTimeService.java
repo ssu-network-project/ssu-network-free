@@ -6,7 +6,9 @@ import com.example.domain.child.repository.ChildRepository;
 import com.example.domain.timeGoal.entity.TimeGoal;
 import com.example.domain.timeGoal.repository.TimeGoalRepository;
 import com.example.domain.usedTime.entity.UsedTime;
+import com.example.domain.usedTime.entity.UsedTime2;
 import com.example.domain.usedTime.repository.UsedTimeRepository;
+import com.example.domain.usedTime.repository.UsedTimeRepository2;
 import com.example.global.UsageTracker;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,7 +25,8 @@ public class UsedTimeService {
     private final TimeGoalRepository timeGoalRepository;
     private UsageTracker usageTracker;
     private final UsedTimeRepository usedTimeRepository;
-    private List<String> urlList = new ArrayList<>();
+    private final UsedTimeRepository2 usedTimeRepository2;
+    private final List<String> urlList = new ArrayList<>();
 
     public void capturePacketMultiThread(Long userIdx){
 
@@ -43,9 +46,9 @@ public class UsedTimeService {
         }
 
         // 실험용
-        urlList.add("naver.com");
-        urlList.add("youtube.com");
-        urlList.add("example.com");
+//        urlList.add("naver.com");
+//        urlList.add("youtube.com");
+//        urlList.add("example.com");
 
 
         usageTracker = new UsageTracker(urlList);
@@ -58,9 +61,29 @@ public class UsedTimeService {
     public void saveUsageToDB(Long userIdx) {
         // 데이터 DB에 저장하기
         HashMap<String,Long> allTime = usageTracker.getAllUsedTime();
+        Child child =  childRepository.findById(userIdx).get();
 
         for (String url : allTime.keySet()) {
-            UsedTime timeUsage = usedTimeRepository.findByDomainName(url);
+            // db의 url과 child로 저장 요소를 찾아옴
+            UsedTime timeUsage = null;
+
+            for (UsedTime usage : usedTimeRepository.findByChild(child).get()) {
+                if (usage.getDomainName().equals(url)) {
+                    timeUsage = usage;
+                    break; // 'name'이 "naver"인 첫 번째 'Usage'를 찾았으므로 반복문을 종료합니다.
+                }
+            }
+
+            if (timeUsage == null) {
+                insertFirstCaptureTime(userIdx, url);
+
+                for (UsedTime usage : usedTimeRepository.findByChild(child).get()) {
+                    if (usage.getDomainName().equals(url)) {
+                        timeUsage = usage;
+                        break; // 'name'이 "naver"인 첫 번째 'Usage'를 찾았으므로 반복문을 종료합니다.
+                    }
+                }
+            }
 
             if(timeUsage != null) {
                 UsedTime updatedUsedTime = UsedTime.builder()
@@ -71,7 +94,7 @@ public class UsedTimeService {
                         .build();
                 usedTimeRepository.save(updatedUsedTime);
             } else
-                insertFirstCaptureTime(userIdx,url);
+                System.out.println("db에 존재하지 않는 column입니다");
         }
     }
 
@@ -94,16 +117,39 @@ public class UsedTimeService {
         usedTimeRepository.save(firstUsedTime);
     }
 
-private static class Pair<L,R>{
-    L left;
-    R right;
+    /* 이전 구현 내용 */
+    public void insertFirstCaptureTimeJPacketCapture(Child child, String ipAddress, String domainName, Long firstTimeCapturedTime) {
 
-    Pair(L l, R r){
-        this.left=l;
-        this.right=r;
+        UsedTime2 firstUsedTime = UsedTime2.builder()
+                .usedTime(0L)
+                .firstCapturedTime(firstTimeCapturedTime)
+                .child(child)
+                .capturedNum(1)
+                .domainName(domainName)
+                .ipAddress(ipAddress)
+                .build();
+        usedTimeRepository2.save(firstUsedTime);
     }
-}
+    public void insertCaptureTimeJPacketCapture(Child child, UsedTime2 existedUsedTime, Long usedTime, String extractedIpAddress, String domainName){
+        System.out.println("UsedTime updated in DB " + domainName);
+        Long firstCapturedTime = existedUsedTime.getFirstCapturedTime();
+        //2번 update
+        Long id = existedUsedTime.getId();
+        int capturedNum = existedUsedTime.getCapturedNum();
+        UsedTime2 existedUsedTimeForUpdate = usedTimeRepository2.findById(id).get();
+        capturedNum +=1;
 
+        UsedTime2 updatedUsedTime = UsedTime2.builder()
+                .id(id)
+                .usedTime(usedTime)
+                .firstCapturedTime(firstCapturedTime)
+                .child(child)
+                .capturedNum(capturedNum)
+                .domainName(domainName)
+                .ipAddress(extractedIpAddress)
+                .build();
+        usedTimeRepository2.save(updatedUsedTime);
+    }
 }
 
 

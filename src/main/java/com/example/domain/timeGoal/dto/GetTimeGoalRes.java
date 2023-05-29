@@ -5,6 +5,15 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 
+/**현재까지 저장된 모든 도메인 별 시간 목표 조회 Response Body**/
+/**하나의 도메인 별 시간 **/
+
+/**
+ * 목표 id
+ * 도메인
+ * 시간 (단위 : 분)
+ * 등록한 자녀 id
+ */
 @Builder(access = AccessLevel.PRIVATE)
 @Getter
 public class GetTimeGoalRes {

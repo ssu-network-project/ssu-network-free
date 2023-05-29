@@ -5,6 +5,13 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 
+
+/**회원가입 API의 Response Body**/
+
+/**
+ * 회원 id
+ * 회원가입 성공 메시지
+ */
 @Builder(access = AccessLevel.PRIVATE)
 @Getter
 public class PostChildRes {
