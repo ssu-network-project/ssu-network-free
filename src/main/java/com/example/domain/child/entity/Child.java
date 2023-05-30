@@ -1,13 +1,19 @@
 package com.example.domain.child.entity;
 
-import com.example.domain.parent.entity.Parent;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.ColumnDefault;
 
+/**자녀 스키마**/
+
+/**
+ * 회원 id
+ * 이메일
+ * 비밀번호
+ * 초기 용돈
+ */
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
@@ -23,21 +29,14 @@ public class Child {
     @Column
     private String password;
 
-//    @OneToOne
-//    @JoinColumn(name = "parent_id")
-//    private Parent parent;
-
     @Column
-    private Long score;
-
-//    @Column
-//    private Long usedTime;
+    private Long allowance;
 
     @Builder
-    public Child(Long id, String email, String password, Long score) {
+    public Child(Long id, String email, String password, Long allowance) {
         this.id = id;
         this.email = email;
         this.password = password;
-        this.score = score;
+        this.allowance = allowance;
     }
 }

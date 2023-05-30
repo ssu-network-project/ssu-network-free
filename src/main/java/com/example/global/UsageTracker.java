@@ -1,11 +1,5 @@
 package com.example.global;
 
-import com.example.domain.child.entity.Child;
-import com.example.domain.usedTime.entity.UsedTime;
-import com.example.domain.usedTime.entity.UsedTime2;
-import com.example.domain.usedTime.repository.UsedTimeRepository2;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.jnetpcap.Pcap;
 import org.jnetpcap.PcapBpfProgram;
@@ -14,14 +8,11 @@ import org.jnetpcap.packet.PcapPacket;
 import org.jnetpcap.packet.format.FormatUtils;
 import org.jnetpcap.protocol.network.Ip4;
 import org.jnetpcap.protocol.network.Ip6;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -29,7 +20,8 @@ import java.util.concurrent.Executors;
 @Component
 @RequiredArgsConstructor
 public class UsageTracker {
-    private static final String HTTPS_SYN_FIN_FILTER = "dst port 443 and (tcp-syn|tcp-fin) != 0";
+    // syn, fin ack와 keep-alive 패킷 필터
+    private static final String HTTPS_SYN_FIN_FILTER = "dst port 443 and ((tcp-syn|tcp-fin) != 0 or tcp[14:2] = 1)";
     private static final long SECONDS_IN_MINUTE = 60;
     private static final long MILLIS_IN_SECOND = 1000;
 
@@ -37,19 +29,21 @@ public class UsageTracker {
     private static HashMap<String, Pair<Pcap,Long>> usageList;
     // <url , <pcap,usage>>
 
+    /**
+     *2.도메인 별 사용 시간 조회 API
+     */
+    public HashMap<String,Long> getAllUsedTime(){
 
-    public static HashMap<String, Long> getUsageList() {
-
-        HashMap<String,Long> list = new HashMap<>();
+        HashMap<String,Long> result = new HashMap<>();
 
         for(String url : usageList.keySet()) {
-            list.put(url,usageList.get(url).right);
+            result.put(url,usageList.get(url).right);
         }
 
-        return list;
+        return result;
     }
 
-
+    /**3.도메인 별 사용 시간 캡쳐 시작 API 멀티스레드 구현 로직*/
     public UsageTracker(List<String> urlList) {
 
         usageList = new HashMap<>();
@@ -62,6 +56,9 @@ public class UsageTracker {
             System.err.println("네트워크 장치를 찾을 수 없습니다: " + errbuf);
             return;
         }
+
+        // 네트워크 인터페이스 목록 출력
+        // printNetIf(devices);
 
         // 캡처 장치 열기
         int snaplen = 64 * 1024; // 패킷 캡처 크기
@@ -146,9 +143,8 @@ public class UsageTracker {
                     } else if ((currentTime - startTime)/(MILLIS_IN_SECOND*SECONDS_IN_MINUTE) > 1) {
                         startTime = currentTime;
                     } else {
-                        long endTime = currentTime;
-                        time += (endTime - startTime);
-                        startTime = endTime;
+                        time += (currentTime - startTime);
+                        startTime = currentTime;
                     }
 
                     // 결과 표시 (예: 매분마다)
@@ -159,12 +155,9 @@ public class UsageTracker {
                     System.out.println("사용자의 " + url + " 사용 시간: " + minutes + "분 " + seconds + "초");
 
                     usageList.get(url).right = time;
-
-
                 }
             });
         }
-        // 캡처 장치 닫기
     }
 
     public static void viewUsage() {
@@ -182,6 +175,15 @@ public class UsageTracker {
             System.out.println(count++ + ") " + url);
             System.out.println("- usage : "+ minutes + "분 " + seconds + "초");
         }
+    }
+
+    private void printNetIf(List<PcapIf> devices) {
+
+        int interfaceNum=0;
+        for(PcapIf device : devices) {
+            System.out.printf("[%d] %s\n",interfaceNum++,device.getDescription());
+        }
+
     }
 
     public static class Pair<L,R>{

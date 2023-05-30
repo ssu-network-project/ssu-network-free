@@ -5,24 +5,28 @@ import com.example.domain.child.repository.ChildRepository;
 import com.example.domain.timeGoal.entity.TimeGoal;
 import com.example.domain.timeGoal.repository.TimeGoalRepository;
 import com.example.domain.usedTime.entity.UsedTime;
-import com.example.domain.usedTime.repository.UsedTimeRepository;
+import com.example.domain.usedTime.entity.UsedTime2;
+import com.example.domain.usedTime.repository.UsedTimeRepository2;
 import com.example.domain.usedTime.service.UsedTimeService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jnetpcap.JCaptureHeader;
 import org.jnetpcap.Pcap;
 import org.jnetpcap.PcapBpfProgram;
 import org.jnetpcap.PcapIf;
-import org.jnetpcap.packet.JHeader;
 import org.jnetpcap.packet.JPacket;
 import org.jnetpcap.packet.JPacketHandler;
+import org.jnetpcap.packet.format.FormatUtils;
 import org.jnetpcap.protocol.network.Ip4;
 import org.jnetpcap.protocol.tcpip.Tcp;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,8 +41,12 @@ public class JPacketCapture {
     private final TimeGoalRepository timeGoalRepository;
     private final UsedTimeService usedTimeService;
 
-    private final UsedTimeRepository usedTimeRepository;
+    private final UsedTimeRepository2 usedTimeRepository;
 
+    /**
+     *1.도메인 별 사용 시간 캡쳐 API
+     */
+    //네트워크 인터페이스 설정
     public void startCaptureByInterface(Long userIdx) throws IOException {
 
         List<PcapIf> allDevs = new ArrayList<>();
@@ -74,6 +82,12 @@ public class JPacketCapture {
         }
         capturePacketByDomain(pcap,userIdx);
     }
+
+
+    /**
+     *1.도메인 별 사용 시간 캡쳐 API
+     */
+    //캡쳐 시작
     public void capturePacketByDomain(Pcap pcap, Long userIdx) {
         //현재 Child
         Child child = childRepository.findById(userIdx).get();
@@ -152,15 +166,8 @@ public class JPacketCapture {
             goalDomainNameAndIpAddress.put(k,v);
         }
 
-        //출력
-        for (String s : goalDomainNameAndIpAddress.keySet()) {
-            System.out.println("final key(extracted IP) = " + s);
-        }
-        for (String s : goalDomainNameAndIpAddress.values()) {
-            System.out.println("final value(Domain Goal)= " + s);
-        }
 
-
+        //패킷 핸들러 생성
         JPacketHandler<String> packetHandler = new JPacketHandler<>() {
             private final Tcp tcp = new Tcp();
             private final Ip4 ip = new Ip4();
@@ -170,21 +177,24 @@ public class JPacketCapture {
 
             Long firstPacketCapturedTime=0L;//첫 번째 패킷의 캡쳐된 시간
 
+
+            //패킷이 캡쳐되었을때 아래 메소드 호출
             @Override
             public void nextPacket(JPacket packet, String user) {
                 if (packet.hasHeader(tcp) && packet.hasHeader(ip)) {
-                    System.out.println("user = " + user);
-                    System.out.printf("캡처 시작: %s\n 패킷의 길이: %-4d\n", new Date(packet.getCaptureHeader().timestampInMillis()),
-                            packet.getCaptureHeader().caplen());
+                    //System.out.println("user = " + user);
+                    //System.out.printf("캡처 시작: %s\n 패킷의 길이: %-4d\n", new Date(packet.getCaptureHeader().timestampInMillis()),
+                    //        packet.getCaptureHeader().caplen());
 
-                    String srcIp = org.jnetpcap.packet.format.FormatUtils.ip(ip.source());
-                    String dstIp = org.jnetpcap.packet.format.FormatUtils.ip(ip.destination());
-                    System.out.println("Source IP: " + srcIp);
-                    System.out.println("Destination IP: " + dstIp);
+                    String srcIp = FormatUtils.ip(ip.source());
+                    String dstIp = FormatUtils.ip(ip.destination());
+                    //System.out.println("Source IP: " + srcIp);
+                    //System.out.println("Destination IP: " + dstIp);
 
                     //목표 Domain으로 오고가는 패킷 캡쳐 및 추출
                     for (String finalExtractedAddr : finalExtractedAddrList) {
                         if (srcIp.startsWith(finalExtractedAddr) || dstIp.startsWith(finalExtractedAddr)){
+                            System.out.println("captured");
                             String domainName = goalDomainNameAndIpAddress.get(finalExtractedAddr);
                             //사용시간 (단위는 우선 밀리세컨드, 추후 수정 가능)
                             //업데이트용 시간
@@ -194,63 +204,41 @@ public class JPacketCapture {
                             //1-1) child에 대한 UsedTime이 아예 없음
                             if(usedTimeRepository.findByChild(child).isEmpty()){
                                 firstPacketCapturedTime = packet.getCaptureHeader().timestampInMillis();
-                                usedTimeService.insertFirstCaptureTime(child,finalExtractedAddr,domainName,firstPacketCapturedTime);
+                                usedTimeService.insertFirstCaptureTimeJPacketCapture(child,finalExtractedAddr,domainName,firstPacketCapturedTime);
                             }
 
                             //usedTime 추출
-                            List<UsedTime> childUsedTime = usedTimeRepository.findByChild(child).get();
-                            Optional<UsedTime> existedUsedTimeOptional = childUsedTime.stream()
-                                    .filter(usedTime1 -> usedTime1.getIpAddress() == finalExtractedAddr)
+                            List<UsedTime2> childUsedTime = usedTimeRepository.findByChild(child).get();
+                            Optional<UsedTime2> existedUsedTimeOptional = childUsedTime.stream()
+                                    .filter(usedTime2 -> usedTime2.getIpAddress() == finalExtractedAddr)
                                     .findFirst();
 
                             //2. 업데이트 수행
                             //DB에 있는 UsedTime 리스트 중에 지금의 ipAddress가 있음
                             if (existedUsedTimeOptional.isPresent()) {
-                                UsedTime existedUsedTime = existedUsedTimeOptional.get();
+                                UsedTime2 existedUsedTime = existedUsedTimeOptional.get();
                                 Long currentCapturedPacket = packet.getCaptureHeader().timestampInMillis();
                                 System.out.println("currentCapturedPacket = " + currentCapturedPacket);
                                 firstPacketCapturedTime = existedUsedTime.getFirstCapturedTime();
                                 usedTime = currentCapturedPacket - firstPacketCapturedTime;
-                                usedTimeService.insertUsedTimeByDomain(child, existedUsedTime, usedTime, finalExtractedAddr, domainName);
+                                usedTimeService.insertCaptureTimeJPacketCapture(child, existedUsedTime, usedTime, finalExtractedAddr, domainName);
                             } else {
                                 //1-2) child에 대한 UsedTime은 존재하나, 해당 도메인은 없음
                                 firstPacketCapturedTime = packet.getCaptureHeader().timestampInMillis();
-                                usedTimeService.insertFirstCaptureTime(child, finalExtractedAddr, domainName, firstPacketCapturedTime);
+                                usedTimeService.insertFirstCaptureTimeJPacketCapture(child, finalExtractedAddr, domainName, firstPacketCapturedTime);
                             }
-//
-//                            int existedUsedTimeByThisDomain=0;
-//                            for (UsedTime existedUsedTime : childUsedTime) {
-//                                //2. 업데이트 수행
-//                                //DB에 있는 UsedTime 리스트 중에 지금의 ipAddress가 있음
-//                                if (existedUsedTime.getIpAddress() == finalExtractedAddr) {
-//                                    existedUsedTimeByThisDomain++;
-//                                    System.out.println("not first Time Captured ");
-//                                    Long currentCapturedPacket = packet.getCaptureHeader().timestampInMillis();
-//                                    System.out.println("currentCapturedPacket = " + currentCapturedPacket);
-//                                    Long firstPacketCapturedTime = existedUsedTime.getFirstCapturedTime();
-//                                    usedTime = currentCapturedPacket - firstPacketCapturedTime;
-//                                    usedTimeService.insertUsedTimeByDomain(child, existedUsedTime, usedTime, finalExtractedAddr, domainName);
-//                                    System.out.println("usedTime = " + usedTime);
-//                                }
-//                            }
-//                            System.out.println("existedUsedTimeByThisDomain = " + existedUsedTimeByThisDomain);
-//                            if(existedUsedTimeByThisDomain==0) {
-//                                //1-2) child에 대한 UsedTime은 존재하나, 해당 도메인은 없음
-//                                firstPacketCapturedTime = packet.getCaptureHeader().timestampInMillis();
-//                                usedTimeService.insertFirstCaptureTime(child, finalExtractedAddr, domainName, firstPacketCapturedTime);
-//                            }
 
                             byte[] data = packet.getByteArray(tcp.getOffset(), tcp.getHeaderLength() + tcp.getPayloadLength());
-                            System.out.println("packet = " + packet);
+                            //System.out.println("packet = " + packet);
                             long time = packet.getCaptureHeader().timestampInMillis();
 
                             if (tcp.destination() == 443) {
                                 // SSL/TLS 핸드셰이크 패킷 처리
                                 String hex = bytesToHex(data);
-                                System.out.println("SSL/TLS Handshake: " + hex);
+                                //System.out.println("SSL/TLS Handshake: " + hex);
                             } else {
                                 // HTTPS 패킷 처리
-                                System.out.println("HTTPS Packet: " + new String(data));
+                                //System.out.println("HTTPS Packet: " + new String(data));
                                 // System.out.println(packet);
                             }
                         }
@@ -258,185 +246,6 @@ public class JPacketCapture {
                 }
             }
 
-            private String bytesToHex(byte[] bytes) {
-                StringBuilder sb = new StringBuilder();
-                for (byte b : bytes) {
-                    sb.append(String.format("%02X ", b));
-                }
-                return sb.toString();
-            }
-        };
-        pcap.loop(Pcap.LOOP_INFINITE, packetHandler, "");
-
-
-    }
-//    public void captureNaverPacket(Pcap pcap, Long userIdx,String domainName) {
-//
-//
-//        //네이버 도메인 관련 필터 생성
-//        String filter = "tcp port 443";
-//        PcapBpfProgram program = new PcapBpfProgram();
-//        int mask = 0xffffff;
-//        if (pcap.compile(program, filter, 1, mask) != Pcap.OK) {
-//            System.err.println(pcap.getErr());
-//        }
-//        if (pcap.setFilter(program) != Pcap.OK) {
-//            System.err.println(pcap.getErr());
-//        }
-//
-//        String addrNaver = null;
-//
-//        try {
-//            //InetAddress address = InetAddress.getByName("www.naver.com");
-//            InetAddress address = InetAddress.getByName(domainName);
-//            //네이버의 IP 주소 223.130.195.95
-//            addrNaver = address.getHostAddress();
-//
-//            System.out.println(domainName+"의 IP 주소: " + addrNaver);
-//        } catch (Exception e) {
-//            System.out.println("IP 주소를 얻는 중 오류가 발생하였습니다.");
-//            e.printStackTrace();
-//        }
-//
-//        // 도메인 IP 고정된 부분 추출하기
-//        //223.130
-//        String regex = "^(\\d{1,3}\\.\\d{1,3})\\..*";
-//        String extractedAddr = null;
-//
-//        Pattern pattern = Pattern.compile(regex);
-//        Matcher matcher = pattern.matcher(addrNaver);
-//        System.out.println("pattern = " + pattern);
-//        System.out.println("matcher = " + matcher);
-//
-//        if (matcher.matches()) { extractedAddr = matcher.group(1); }
-//        System.out.println();
-//
-//        // 캡처된 패킷 처리
-//        //finalExtractedAddr : 223.130
-//        String finalExtractedAddr = extractedAddr;
-//        System.out.println("finalExtractedAddr = " + finalExtractedAddr);
-//
-//        JPacketHandler<String> packetHandler = new JPacketHandler<>() {
-//            private final Tcp tcp = new Tcp();
-//            private final Ip4 ip = new Ip4();
-//
-//            int naverPacketNum=0; //naver 필터에 부합하는 몇 번째 필터인지
-//
-//            long firstPacketCapturedTime=0;//첫 네이버 패킷의 캡쳐된 시간
-//            @Override
-//            public void nextPacket(JPacket packet, String user) {
-//                if (packet.hasHeader(tcp) && packet.hasHeader(ip)) {
-//                    System.out.println("user = " + user);
-//                    System.out.printf("캡처 시작: %s\n 패킷의 길이: %-4d\n", new Date(packet.getCaptureHeader().timestampInMillis()),
-//                            packet.getCaptureHeader().caplen());
-//
-//                    //System.out.println("packet.toString() = " + packet.toString());
-//                    String srcIp = org.jnetpcap.packet.format.FormatUtils.ip(ip.source());
-//                    String dstIp = org.jnetpcap.packet.format.FormatUtils.ip(ip.destination());
-//                    System.out.println("Source IP: " + srcIp);
-//                    System.out.println("Destination IP: " + dstIp);
-//                    //네이버로 오고가는 패킷 캡쳐 및 추출
-//                    if (srcIp.startsWith(finalExtractedAddr) || dstIp.startsWith(finalExtractedAddr)) {
-//
-////                        try {
-////                            InetAddress address = InetAddress.getByName("www.naver.com");
-////                            //네이버의 IP 주소 223.130.195.95
-////                             addrNaver = address.getHostAddress();
-////
-////                            System.out.println("네이버의 IP 주소: " + addrNaver);
-////                        } catch (Exception e) {
-////                            System.out.println("IP 주소를 얻는 중 오류가 발생하였습니다.");
-////                            e.printStackTrace();
-////                        }
-//                        long usedTime; //사용시간 (단위는 우선 밀리세컨드, 추후 수정 가능)
-//
-//                        //첫번째 패킷의 캡쳐 시간은 계속 저장해놓기 위해 변수에 저장
-//                        if(naverPacketNum ==0){
-//                            firstPacketCapturedTime = packet.getCaptureHeader().timestampInMillis();
-//                            System.out.println("naver Packet First Captured");
-//                            System.out.println("firstPacketCapturedTime = " + firstPacketCapturedTime);
-//                            //naverPacketNum++;
-//                        }
-//                        //지속해서 네이버 패킷을 캡쳐한 후 첫번째 네이버 패킷 캡쳐 시간과의 차를 usedTime 변수에 저장
-//                        else{
-//                            System.out.println("not first Time Captured ");
-//                            long currentCapturedPacket = packet.getCaptureHeader().timestampInMillis();
-//                            System.out.println("currentCapturedPacket = " + currentCapturedPacket);
-//                            usedTime = currentCapturedPacket -firstPacketCapturedTime;
-//                            usedTimeService.insertNaverUsedTime(userIdx, usedTime);
-//                            System.out.println("usedTime = " + usedTime);
-//                            //naverPacketNum++;
-//                        }
-//                        naverPacketNum++; //캡쳐된 네이버 패킷 수 증가
-//
-//                        byte[] data = packet.getByteArray(tcp.getOffset(), tcp.getHeaderLength() + tcp.getPayloadLength());
-//                        System.out.println("packet = " + packet);
-//                        long time = packet.getCaptureHeader().timestampInMillis();
-//
-//                        if (tcp.destination() == 443) {
-//                            // SSL/TLS 핸드셰이크 패킷 처리
-//                            String hex = bytesToHex(data);
-//                            System.out.println("SSL/TLS Handshake: " + hex);
-//                        } else {
-//                            // HTTPS 패킷 처리
-//                            System.out.println("HTTPS Packet: " + new String(data));
-//                            // System.out.println(packet);
-//                        }
-//                    }
-//                }
-//            }
-//
-//            private String bytesToHex(byte[] bytes) {
-//                StringBuilder sb = new StringBuilder();
-//                for (byte b : bytes) {
-//                    sb.append(String.format("%02X ", b));
-//                }
-//                return sb.toString();
-//            }
-//        };
-//        pcap.loop(Pcap.LOOP_INFINITE, packetHandler, "");
-
-
-  //  }
-    public void captureHttpsPacket(Pcap pcap, Long userIdx) {
-
-
-        String filter = "tcp port 443";
-        PcapBpfProgram program = new PcapBpfProgram();
-        int mask = 0xffffff;
-        if (pcap.compile(program, filter, 1, mask) != Pcap.OK) {
-            System.err.println(pcap.getErr());
-        }
-        if (pcap.setFilter(program) != Pcap.OK) {
-            System.err.println(pcap.getErr());
-        }
-
-        // 캡처된 패킷 처리
-        JPacketHandler<String> packetHandler = new JPacketHandler<>() {
-            private final Tcp tcp = new Tcp();
-            private final Ip4 ip = new Ip4();
-
-            @Override
-            public void nextPacket(JPacket packet, String user) {
-                if (packet.hasHeader(tcp) && packet.hasHeader(ip)) {
-                    String srcIp = org.jnetpcap.packet.format.FormatUtils.ip(ip.source());
-                    String dstIp = org.jnetpcap.packet.format.FormatUtils.ip(ip.destination());
-                    System.out.println("Source IP: " + srcIp);
-                    System.out.println("Destination IP: " + dstIp);
-                    byte[] data = packet.getByteArray(tcp.getOffset(), tcp.getHeaderLength() + tcp.getPayloadLength());
-
-//                    System.out.println(packet);
-                    if (tcp.destination() == 443) {
-                        // SSL/TLS 핸드셰이크 패킷 처리
-                        String hex = bytesToHex(data);
-                        System.out.println("SSL/TLS Handshake: " + hex);
-                    } else {
-                        // HTTPS 패킷 처리
-                        System.out.println("HTTPS Packet: " + new String(data));
-                        System.out.println("packet = " + packet);
-                    }
-                }
-            }
 
             private String bytesToHex(byte[] bytes) {
                 StringBuilder sb = new StringBuilder();
@@ -447,56 +256,7 @@ public class JPacketCapture {
             }
         };
         pcap.loop(Pcap.LOOP_INFINITE, packetHandler, "");
-
     }
-
-    public void captureHttpPacket() {
-
-        String filter = "tcp port 80";
-        PcapBpfProgram program = new PcapBpfProgram();
-        int mask = 0xffffff;
-        if (pcap.compile(program, filter, 1, mask) != Pcap.OK) {
-            System.err.println(pcap.getErr());
-        }
-        if (pcap.setFilter(program) != Pcap.OK) {
-            System.err.println(pcap.getErr());
-        }
-
-        // 캡처된 패킷 처리
-        JPacketHandler<String> packetHandler = new JPacketHandler<>() {
-            private final Tcp tcp = new Tcp();
-            private final Ip4 ip = new Ip4();
-
-            @Override
-            public void nextPacket(JPacket packet, String user) {
-                if (packet.hasHeader(tcp) && packet.hasHeader(ip)) {
-                    byte[] data = packet.getByteArray(tcp.getOffset(), tcp.getHeaderLength() + tcp.getPayloadLength());
-
-
-                    if (tcp.destination() == 80) {
-                        // SSL/TLS 핸드셰이크 패킷 처리
-                        String hex = bytesToHex(data);
-                        System.out.println("SSL/TLS Handshake: " + hex);
-                    } else {
-                        // HTTPS 패킷 처리
-                        System.out.println(packet);
-                        System.out.println("HTTPS Packet: " + new String(data));
-                    }
-                }
-            }
-
-            private String bytesToHex(byte[] bytes) {
-                StringBuilder sb = new StringBuilder();
-                for (byte b : bytes) {
-                    sb.append(String.format("%02X ", b));
-                }
-                return sb.toString();
-            }
-        };
-        pcap.loop(Pcap.LOOP_INFINITE, packetHandler, "");
-
-    }
-
     public void close() {
         pcap.close();
     }

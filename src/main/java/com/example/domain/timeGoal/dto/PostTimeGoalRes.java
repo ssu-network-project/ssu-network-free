@@ -5,11 +5,14 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+/**도메인 별 시간 목표 생성 API의 Response Body**/
 
+/**
+ * 시간 목표 id
+ * 도메인
+ * 목표 시간 (단위 : 분)
+ * 성공 메시지
+ */
 @Builder(access = AccessLevel.PRIVATE)
 @Getter
 public class PostTimeGoalRes {

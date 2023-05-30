@@ -8,8 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface UsedTimeRepository2 extends JpaRepository<UsedTime2,Long> {
+    Optional<List<UsedTime2>> findByChild(Child child);
 
-        Optional<List<UsedTime2>> findByChild(Child child);
-
-        Optional<UsedTime2> findByDomainName(String domainName);
+    Long findByIpAddress(String ipAddress);
 }
